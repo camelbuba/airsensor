@@ -1,10 +1,13 @@
 package org.qiaolei.airsensor
 
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,52 +26,42 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import org.qiaolei.airsensor.data.DeviceModel
 import org.qiaolei.airsensor.data.DeviceConnectionState
-import org.qiaolei.airsensor.data.SensorOutput
+import org.qiaolei.airsensor.data.DeviceModel
 import org.qiaolei.airsensor.ui.theme.AirsensorTheme
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var devices: List<DeviceModel>
+
+    private lateinit var gattClient: GattClient
+    private val viewModel by viewModels<MainViewModel>()
+
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        devices = mockDeviceList()
-        devices = mockEmptyDeviceList()
+        gattClient = GattClient(this, viewModel)
         setContent {
-
             AirsensorTheme {
                 Surface(color = MaterialTheme.colors.background) {
-                    MainScreen()
+                    MainScreen(gattClient, viewModel = viewModel)
                 }
             }
         }
     }
 }
 
-fun mockDeviceList(): List<DeviceModel> {
-    return listOf(
-        DeviceModel("long long long device 1", DeviceConnectionState.CONNECTED, SensorOutput(28.30f, 40.0f)),
-        DeviceModel("device 2", DeviceConnectionState.OFFLINE, null),
-        DeviceModel("device 3", DeviceConnectionState.FOUND, null),
-        DeviceModel("device 4", DeviceConnectionState.FOUND, null)
-    )
-}
-
-fun mockEmptyDeviceList(): List<DeviceModel> {
-    return listOf()
-}
-
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun MainScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = viewModel()) {
-    val mainUiState by mainViewModel.uiState.collectAsState()
+fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel: MainViewModel) {
+    Log.i("xxx", "refresh main screen")
+    val mainUiState by viewModel.uiState.collectAsState()
+    val devices = mainUiState.devices
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text(if (mainUiState.isScanning) "扫描中" else "Air Sensor") },
             actions = {
                 IconButton(onClick = {
-                    mainViewModel.updateDevices()
+                    gattClient.scan()
                 }) {
                     Icon(ImageVector.vectorResource(R.drawable.bluetooth), "扫描")
                 }
@@ -78,10 +71,11 @@ fun MainScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = vie
                 .padding(horizontal = px2dp(LocalContext.current, 12f))
         )
         {
-            if (mainUiState.devices.isEmpty()) {
+            if (devices.isEmpty()) {
+                Log.i("xxx", "devices is empty")
                 NoDevicesScanned()
             } else {
-                DeviceList(mainUiState.devices)
+                DeviceList(devices)
             }
         }
     }
@@ -98,7 +92,6 @@ fun NoDevicesScanned() {
 fun px2dp(context: Context, pixels: Float): Dp {
     val density = context.resources.displayMetrics.density
     val scale = 2
-    Log.i("xxx", density.toString())
     return Dp(pixels / scale * density)
 }
 
@@ -111,7 +104,7 @@ fun DeviceList(devices: List<DeviceModel>) {
     ) {
         items(devices.size) { index ->
             val device = devices[index]
-            Device(device)
+            DeviceCard(device)
         }
     }
 }
@@ -225,7 +218,7 @@ fun DeviceStateText(text: String) {
 }
 
 @Composable
-fun Device(device: DeviceModel) {
+fun DeviceCard(device: DeviceModel) {
     val context = LocalContext.current
     Card(
         elevation = 4.dp,
