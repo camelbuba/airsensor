@@ -2,7 +2,10 @@ package org.qiaolei.airsensor
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -12,7 +15,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import org.qiaolei.airsensor.data.DeviceConnectionState
@@ -22,6 +24,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
 
     companion object {
         const val DEVICE_NAME = "air sensor"
+        const val AUTO_CONNECT = true
         const val REQUEST_BLUETOOTH_CODE = 19
         const val TAG = "GattClient"
     }
@@ -36,7 +39,14 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                 Log.i(TAG, "found device: $address")
                 val name: String = if (device.name == null || device.name.isEmpty()) "匿名设备" else device.name
                 val deviceModel =
-                    DeviceModel(address = address, name = name, state = DeviceConnectionState.FOUND, output = null)
+                    DeviceModel(
+                        address = address,
+                        name = name,
+                        state = DeviceConnectionState.FOUND,
+                        output = null,
+                        bluetoothDevice = device,
+                        gatt = null
+                    )
                 viewModel.addDevice(deviceModel)
             }
         }
@@ -91,30 +101,57 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun connect(device: DeviceModel) {
-        var waitConnect: Boolean = false
-        when(device.state) {
+        val waitConnect = when (device.state) {
             DeviceConnectionState.FOUND -> {
-                waitConnect = true
+                true
             }
+
             DeviceConnectionState.CONNECTING -> {
-                waitConnect = false
+                false
             }
+
             DeviceConnectionState.CONNECTED -> {
-                waitConnect = false
+                false
             }
+
             DeviceConnectionState.OFFLINE -> {
-                waitConnect = true
+                true
             }
         }
         if (waitConnect) {
             viewModel.updateDevice(device, DeviceConnectionState.CONNECTING)
+            val gattCallback = GattClientCallback(device)
+            device.bluetoothDevice.connectGatt(activity.applicationContext, AUTO_CONNECT, gattCallback)
         } else {
             viewModel.updateDevice(device, DeviceConnectionState.OFFLINE)
+            device.gatt?.disconnect()
         }
     }
 
-    fun disconnect() {
+    private class GattClientCallback(private val device: DeviceModel) : BluetoothGattCallback() {
+        @SuppressLint("MissingPermission")
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            super.onConnectionStateChange(gatt, status, newState)
+            val isSuccess = status == BluetoothGatt.GATT_SUCCESS
+            val isConnected = newState == BluetoothProfile.STATE_CONNECTED
+            if (isSuccess && isConnected) {
+                gatt?.discoverServices()
+                device.gatt = gatt
+            }
+        }
 
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                gatt?.services?.forEach {
+                    Log.i(TAG, "found service: " + it.uuid)
+                }
+//                val service = gatt?.getService(SERVICE_UUID)
+//                messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
+            }
+
+        }
     }
 }

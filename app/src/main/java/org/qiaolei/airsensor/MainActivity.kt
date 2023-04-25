@@ -3,7 +3,6 @@ package org.qiaolei.airsensor
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -72,7 +71,6 @@ fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel:
             if (devices.isEmpty()) {
                 NoDevicesScanned()
             } else {
-                Log.i("xxx", "render device list")
                 DeviceList(devices, gattClient)
             }
         }
