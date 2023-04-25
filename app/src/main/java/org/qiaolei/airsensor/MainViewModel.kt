@@ -36,17 +36,17 @@ class MainViewModel : ViewModel() {
     }
 
     fun updateDevice(device: DeviceModel) {
+        val newDevice = DeviceModel(name = device.name, address = device.address, output = device.output, state = device.state)
         viewModelScope.launch {
             val devices = _uiState.value.devices
             devices.forEachIndexed { index, it ->
                 if (it.address == device.address) {
-                    devices[index] = device
+                    devices[index] = newDevice
                 }
             }
-            _uiState.emit(_uiState.value)
-//            _uiState.update {
-//                it.copy(devices = devices)
-//            }
+            _uiState.update {
+                it.copy(devices = devices)
+            }
         }
     }
 

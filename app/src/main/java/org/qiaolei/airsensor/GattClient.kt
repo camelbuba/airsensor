@@ -36,7 +36,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                 Log.i(TAG, "found device: $address")
                 val name: String = if (device.name == null || device.name.isEmpty()) "匿名设备" else device.name
                 val deviceModel =
-                    DeviceModel(address = address, name = name, state = mutableStateOf(DeviceConnectionState.FOUND), output = null)
+                    DeviceModel(address = address, name = name, state = DeviceConnectionState.FOUND, output = null)
                 viewModel.addDevice(deviceModel)
             }
         }
@@ -94,7 +94,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
     fun connect(address: String) {
         val device = viewModel.getDevice(address)
         device?.let {
-            it.state = mutableStateOf(DeviceConnectionState.CONNECTING)
+            it.state = DeviceConnectionState.CONNECTING
             viewModel.stopScan()
             viewModel.updateDevice(it)
         }

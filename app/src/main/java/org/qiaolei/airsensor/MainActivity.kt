@@ -10,11 +10,10 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -101,8 +100,9 @@ fun DeviceList(devices: List<DeviceModel>, gattClient: GattClient) {
         verticalArrangement = Arrangement.spacedBy(vspacing),
         contentPadding = PaddingValues(top = vspacing, bottom = vspacing)
     ) {
-        items(devices.size) { index ->
-            val device = devices[index]
+        items(items = devices, key = { device ->
+            device.address
+        }) { device ->
             DeviceCard(device, gattClient)
         }
     }
@@ -127,7 +127,7 @@ fun DeviceStateLine(device: DeviceModel, gattClient: GattClient, modifier: Modif
         )
         IconButton(
             onClick = {
-                      gattClient.connect(device.address)
+                gattClient.connect(device.address)
             }, modifier = Modifier
                 .weight(1f)
                 .wrapContentWidth(Alignment.End)
@@ -137,7 +137,7 @@ fun DeviceStateLine(device: DeviceModel, gattClient: GattClient, modifier: Modif
                 "",
                 tint = Color(0xFFFFFFFF)
             )
-            when (device.state.value) {
+            when (device.state) {
                 DeviceConnectionState.CONNECTED -> {
                     Icon(
                         ImageVector.vectorResource(R.drawable.state_connected_inner),
@@ -230,7 +230,7 @@ fun DeviceCard(device: DeviceModel, gattClient: GattClient) {
     ) {
         Column {
             DeviceStateLine(device, gattClient)
-            when (device.state.value) {
+            when (device.state) {
                 DeviceConnectionState.CONNECTING -> {
                     DeviceStateText("连接设备中")
                 }
