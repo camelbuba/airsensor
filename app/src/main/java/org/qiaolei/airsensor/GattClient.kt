@@ -20,6 +20,7 @@ import org.qiaolei.airsensor.data.DeviceModel
 class GattClient(private val activity: MainActivity, private val viewModel: MainViewModel) {
 
     companion object {
+        const val DEVICE_NAME = "air sensor"
         const val REQUEST_BLUETOOTH_CODE = 19
         const val TAG = "GattClient"
     }
@@ -75,13 +76,12 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         val leScanner = bluetoothManager.adapter.bluetoothLeScanner
         val scanSettings: ScanSettings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).build()
-        val filter = ScanFilter.Builder().setDeviceAddress("60:55:F9:7B:D9:32")
+        val filter = ScanFilter.Builder().setDeviceName(DEVICE_NAME)
             .build()
 
         if (!viewModel.uiState.value.isScanning) {
             viewModel.startScan()
-//            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
-            leScanner.startScan(scanCallback)
+            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
             Log.i(TAG, "start scan")
         } else {
             Log.i(TAG, "stop scan")

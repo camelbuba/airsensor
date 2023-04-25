@@ -21,9 +21,10 @@ class MainViewModel : ViewModel() {
                 if (it) {
                     Log.i("xxx", "addDevice")
                     devices.add(deviceModel)
-                    _uiState.update { currentState ->
-                        currentState.copy(devices = devices)
-                    }
+                    _uiState.emit(_uiState.value)
+//                    _uiState.update { currentState ->
+//                        currentState.copy(devices = devices)
+//                    }
                 }
             }
         }

@@ -3,7 +3,6 @@ package org.qiaolei.airsensor
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -53,12 +52,11 @@ class MainActivity : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel: MainViewModel) {
-    Log.i("xxx", "refresh main screen")
     val mainUiState by viewModel.uiState.collectAsState()
     val devices = mainUiState.devices
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text(if (mainUiState.isScanning) "扫描中" else "Air Sensor") },
+            title = { Text(if (mainUiState.isScanning) "扫描中(" + devices.size + ")" else "") },
             actions = {
                 IconButton(onClick = {
                     gattClient.scan()
@@ -72,7 +70,6 @@ fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel:
         )
         {
             if (devices.isEmpty()) {
-                Log.i("xxx", "devices is empty")
                 NoDevicesScanned()
             } else {
                 DeviceList(devices)
