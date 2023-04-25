@@ -127,7 +127,7 @@ fun DeviceStateLine(device: DeviceModel, gattClient: GattClient, modifier: Modif
         )
         IconButton(
             onClick = {
-                gattClient.connect(device.address)
+                gattClient.connect(device)
             }, modifier = Modifier
                 .weight(1f)
                 .wrapContentWidth(Alignment.End)

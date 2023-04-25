@@ -91,12 +91,26 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         }
     }
 
-    fun connect(address: String) {
-        val device = viewModel.getDevice(address)
-        device?.let {
-            it.state = DeviceConnectionState.CONNECTING
-            viewModel.stopScan()
-            viewModel.updateDevice(it)
+    fun connect(device: DeviceModel) {
+        var waitConnect: Boolean = false
+        when(device.state) {
+            DeviceConnectionState.FOUND -> {
+                waitConnect = true
+            }
+            DeviceConnectionState.CONNECTING -> {
+                waitConnect = false
+            }
+            DeviceConnectionState.CONNECTED -> {
+                waitConnect = false
+            }
+            DeviceConnectionState.OFFLINE -> {
+                waitConnect = true
+            }
+        }
+        if (waitConnect) {
+            viewModel.updateDevice(device, DeviceConnectionState.CONNECTING)
+        } else {
+            viewModel.updateDevice(device, DeviceConnectionState.OFFLINE)
         }
     }
 
