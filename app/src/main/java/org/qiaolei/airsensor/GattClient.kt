@@ -1,3 +1,5 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package org.qiaolei.airsensor
 
 import android.Manifest
@@ -14,6 +16,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
+import kotlinx.coroutines.*
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
 import org.qiaolei.airsensor.data.SensorOutput
@@ -46,7 +49,8 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                         state = DeviceConnectionState.FOUND,
                         output = null,
                         bluetoothDevice = device,
-                        gatt = null
+                        gatt = null,
+                        job = null
                     )
                 viewModel.addDevice(deviceModel)
             }
@@ -133,11 +137,13 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         } else {
             viewModel.updateDevice(device, DeviceConnectionState.OFFLINE)
             val dev = viewModel.getDevice(device.address)
+            dev?.job?.cancel()
             dev?.gatt?.disconnect()
         }
     }
 
-    private class GattClientCallback(private val device: DeviceModel, private val viewModel: MainViewModel) : BluetoothGattCallback() {
+    private class GattClientCallback(private val device: DeviceModel, private val viewModel: MainViewModel) :
+        BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
@@ -157,17 +163,26 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
+            Log.i(TAG, "on services discovered")
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 gatt?.services?.forEach {
                     Log.i(TAG, "found service: " + it.uuid)
                 }
                 val service = gatt?.getService(SERVICE_UUID)
                 val characteristic = service?.getCharacteristic(TEMPERATURE_MESSAGE_UUID)
-                characteristic?.let {
-                    val success = gatt.readCharacteristic(it)
-                    if (success) {
-                        Log.i(TAG, "read value: ")
+                characteristic?.let { char ->
+                    val job = GlobalScope.launch {
+                        val dev = viewModel.getDevice(device.address)
+                        dev?.let {
+                            while (true) {
+                                if (!gatt.readCharacteristic(char)) {
+                                    Log.e(TAG, "read value error")
+                                }
+                                delay(2000)
+                            }
+                        }
                     }
+                    device.job = job
                 }
             }
 
