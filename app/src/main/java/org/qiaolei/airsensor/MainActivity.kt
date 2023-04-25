@@ -3,6 +3,7 @@ package org.qiaolei.airsensor
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -72,7 +73,8 @@ fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel:
             if (devices.isEmpty()) {
                 NoDevicesScanned()
             } else {
-                DeviceList(devices)
+                Log.i("xxx", "render device list")
+                DeviceList(devices, gattClient)
             }
         }
     }
@@ -93,7 +95,7 @@ fun px2dp(context: Context, pixels: Float): Dp {
 }
 
 @Composable
-fun DeviceList(devices: List<DeviceModel>) {
+fun DeviceList(devices: List<DeviceModel>, gattClient: GattClient) {
     val vspacing = px2dp(LocalContext.current, 18f)
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(vspacing),
@@ -101,13 +103,13 @@ fun DeviceList(devices: List<DeviceModel>) {
     ) {
         items(devices.size) { index ->
             val device = devices[index]
-            DeviceCard(device)
+            DeviceCard(device, gattClient)
         }
     }
 }
 
 @Composable
-fun DeviceStateLine(device: DeviceModel, modifier: Modifier = Modifier) {
+fun DeviceStateLine(device: DeviceModel, gattClient: GattClient, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -124,7 +126,9 @@ fun DeviceStateLine(device: DeviceModel, modifier: Modifier = Modifier) {
             overflow = TextOverflow.Ellipsis
         )
         IconButton(
-            onClick = {}, modifier = Modifier
+            onClick = {
+                      gattClient.connect(device.address)
+            }, modifier = Modifier
                 .weight(1f)
                 .wrapContentWidth(Alignment.End)
         ) {
@@ -133,7 +137,7 @@ fun DeviceStateLine(device: DeviceModel, modifier: Modifier = Modifier) {
                 "",
                 tint = Color(0xFFFFFFFF)
             )
-            when (device.state) {
+            when (device.state.value) {
                 DeviceConnectionState.CONNECTED -> {
                     Icon(
                         ImageVector.vectorResource(R.drawable.state_connected_inner),
@@ -215,7 +219,7 @@ fun DeviceStateText(text: String) {
 }
 
 @Composable
-fun DeviceCard(device: DeviceModel) {
+fun DeviceCard(device: DeviceModel, gattClient: GattClient) {
     val context = LocalContext.current
     Card(
         elevation = 4.dp,
@@ -225,8 +229,8 @@ fun DeviceCard(device: DeviceModel) {
             .height(210.dp)
     ) {
         Column {
-            DeviceStateLine(device)
-            when (device.state) {
+            DeviceStateLine(device, gattClient)
+            when (device.state.value) {
                 DeviceConnectionState.CONNECTING -> {
                     DeviceStateText("连接设备中")
                 }

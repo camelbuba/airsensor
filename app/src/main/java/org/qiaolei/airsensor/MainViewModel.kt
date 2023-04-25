@@ -30,6 +30,26 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun getDevice(address: String): DeviceModel? {
+        val devices = _uiState.value.devices
+        return devices.find { it.address == address }
+    }
+
+    fun updateDevice(device: DeviceModel) {
+        viewModelScope.launch {
+            val devices = _uiState.value.devices
+            devices.forEachIndexed { index, it ->
+                if (it.address == device.address) {
+                    devices[index] = device
+                }
+            }
+            _uiState.emit(_uiState.value)
+//            _uiState.update {
+//                it.copy(devices = devices)
+//            }
+        }
+    }
+
     fun startScan() {
         _uiState.update {
             it.copy(isScanning = true)
