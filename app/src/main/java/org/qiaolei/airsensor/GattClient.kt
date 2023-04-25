@@ -19,7 +19,6 @@ import androidx.core.app.ActivityCompat.requestPermissions
 import kotlinx.coroutines.*
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
-import org.qiaolei.airsensor.data.SensorOutput
 import java.util.*
 
 class GattClient(private val activity: MainActivity, private val viewModel: MainViewModel) {
@@ -29,6 +28,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         const val AUTO_CONNECT = true
         val SERVICE_UUID: UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b")
         val TEMPERATURE_MESSAGE_UUID: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8")
+        val HUMIDITY_MESSAGE_UUID: UUID = UUID.fromString("32db52a6-5c87-407b-8bc0-c4170df277cd")
         const val REQUEST_BLUETOOTH_CODE = 19
         const val TAG = "GattClient"
     }
@@ -47,7 +47,8 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                         address = address,
                         name = name,
                         state = DeviceConnectionState.FOUND,
-                        output = null,
+                        temperature = "--",
+                        humidity = "--",
                         bluetoothDevice = device,
                         gatt = null,
                         job = null
@@ -126,7 +127,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
             }
         }
         if (waitConnect) {
-            viewModel.updateDevice(device, DeviceConnectionState.CONNECTING)
+            viewModel.updateDeviceState(device, DeviceConnectionState.CONNECTING)
             val gattCallback = GattClientCallback(device, viewModel)
             device.bluetoothDevice.connectGatt(
                 activity.applicationContext,
@@ -135,7 +136,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                 BluetoothDevice.TRANSPORT_LE
             )
         } else {
-            viewModel.updateDevice(device, DeviceConnectionState.OFFLINE)
+            viewModel.updateDeviceState(device, DeviceConnectionState.OFFLINE)
             val dev = viewModel.getDevice(device.address)
             dev?.job?.cancel()
             dev?.gatt?.disconnect()
@@ -149,7 +150,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
             super.onConnectionStateChange(gatt, status, newState)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    viewModel.updateDevice(device, DeviceConnectionState.CONNECTED)
+                    viewModel.updateDeviceState(device, DeviceConnectionState.CONNECTED)
                     gatt?.discoverServices()
                     val dev = viewModel.getDevice(device.address)
                     dev?.gatt = gatt
@@ -169,21 +170,27 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                     Log.i(TAG, "found service: " + it.uuid)
                 }
                 val service = gatt?.getService(SERVICE_UUID)
-                val characteristic = service?.getCharacteristic(TEMPERATURE_MESSAGE_UUID)
-                characteristic?.let { char ->
-                    val job = GlobalScope.launch {
-                        val dev = viewModel.getDevice(device.address)
-                        dev?.let {
-                            while (true) {
-                                if (!gatt.readCharacteristic(char)) {
-                                    Log.e(TAG, "read value error")
+                val temperatureChar = service?.getCharacteristic(TEMPERATURE_MESSAGE_UUID)
+                val humidityChar = service?.getCharacteristic(HUMIDITY_MESSAGE_UUID)
+                val job = GlobalScope.launch {
+                    val dev = viewModel.getDevice(device.address)
+                    dev?.let {
+                        while (true) {
+                            temperatureChar?.let {
+                                if (!gatt.readCharacteristic(temperatureChar)) {
+                                    Log.e(TAG, "read temperature value error")
                                 }
-                                delay(2000)
                             }
+                            humidityChar?.let {
+                                if (!gatt.readCharacteristic(humidityChar)) {
+                                    Log.e(TAG, "read humidity value error")
+                                }
+                            }
+                            delay(2000)
                         }
                     }
-                    device.job = job
                 }
+                device.job = job
             }
 
         }
@@ -196,10 +203,16 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
             super.onCharacteristicRead(gatt, characteristic, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 characteristic?.let {
-                    val s = String(it.value)
-                    val output = SensorOutput(temperature = s, humidity = "0")
-                    viewModel.updateDevice(device, output)
-                    Log.i(TAG, "read value: $s")
+                    if (it.uuid == TEMPERATURE_MESSAGE_UUID) {
+                        val temperature = String(it.value)
+                        viewModel.updateDeviceTemperature(device, temperature)
+                        Log.i(TAG, "temperature: $temperature")
+                    }
+                    if (it.uuid == HUMIDITY_MESSAGE_UUID) {
+                        val humidity = String(it.value)
+                        viewModel.updateDeviceTemperature(device, humidity)
+                        Log.i(TAG, "temperature: $humidity")
+                    }
                 }
             }
         }

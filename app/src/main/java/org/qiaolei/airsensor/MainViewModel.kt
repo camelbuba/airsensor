@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
-import org.qiaolei.airsensor.data.SensorOutput
 
 class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
@@ -37,7 +36,7 @@ class MainViewModel : ViewModel() {
         return devices.find { it.address == address }
     }
 
-    fun updateDevice(device: DeviceModel, state: DeviceConnectionState) {
+    fun updateDeviceState(device: DeviceModel, state: DeviceConnectionState) {
         val devices = _uiState.value.devices
         devices.forEachIndexed { index, it ->
             if (it.address == device.address) {
@@ -46,11 +45,20 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateDevice(device: DeviceModel, output: SensorOutput) {
+    fun updateDeviceTemperature(device: DeviceModel, temperature: String) {
         val devices = _uiState.value.devices
         devices.forEachIndexed { index, it ->
             if (it.address == device.address) {
-                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED,output = output)
+                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, temperature = temperature)
+            }
+        }
+    }
+
+    fun updateDeviceHumidity(device: DeviceModel, humidity: String) {
+        val devices = _uiState.value.devices
+        devices.forEachIndexed { index, it ->
+            if (it.address == device.address) {
+                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, humidity = humidity)
             }
         }
     }

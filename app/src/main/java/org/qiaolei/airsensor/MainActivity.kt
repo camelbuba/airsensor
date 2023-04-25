@@ -178,24 +178,20 @@ fun SensorOutput(device: DeviceModel) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.offset(x = 28.dp)) {
             Text("温度", style = MaterialTheme.typography.h2)
-            if (device.output != null) {
-                Text(
-                    device.output.temperature.toString(),
-                    style = MaterialTheme.typography.h1,
-                    modifier = Modifier.offset(x = 10.dp)
-                )
-            }
+            Text(
+                device.temperature,
+                style = MaterialTheme.typography.h1,
+                modifier = Modifier.offset(x = 10.dp)
+            )
             Text("℃", style = MaterialTheme.typography.h3, modifier = Modifier.offset(x = 12.dp, y = 3.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.offset(x = 28.dp, y = 18.dp)) {
             Text("湿度", style = MaterialTheme.typography.h2)
-            if (device.output != null) {
-                Text(
-                    device.output.humidity.toString(),
-                    style = MaterialTheme.typography.h1,
-                    modifier = Modifier.offset(x = 10.dp)
-                )
-            }
+            Text(
+                device.humidity,
+                style = MaterialTheme.typography.h1,
+                modifier = Modifier.offset(x = 10.dp)
+            )
             Text("%", style = MaterialTheme.typography.h3, modifier = Modifier.offset(x = 12.dp, y = 3.dp))
         }
     }

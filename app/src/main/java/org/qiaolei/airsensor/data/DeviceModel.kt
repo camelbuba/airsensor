@@ -8,7 +8,8 @@ data class DeviceModel(
     val name: String,
     val address: String,
     var state: DeviceConnectionState,
-    val output: SensorOutput?,
+    var temperature: String,
+    var humidity: String,
     val bluetoothDevice: BluetoothDevice,
     var gatt: BluetoothGatt?,
     var job: Job?
