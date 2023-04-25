@@ -2,10 +2,7 @@ package org.qiaolei.airsensor
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
+import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -19,12 +16,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
+import org.qiaolei.airsensor.data.SensorOutput
+import java.util.*
 
 class GattClient(private val activity: MainActivity, private val viewModel: MainViewModel) {
 
     companion object {
         const val DEVICE_NAME = "air sensor"
         const val AUTO_CONNECT = true
+        val SERVICE_UUID: UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b")
+        val TEMPERATURE_MESSAGE_UUID: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8")
         const val REQUEST_BLUETOOTH_CODE = 19
         const val TAG = "GattClient"
     }
@@ -122,36 +123,70 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         }
         if (waitConnect) {
             viewModel.updateDevice(device, DeviceConnectionState.CONNECTING)
-            val gattCallback = GattClientCallback(device)
-            device.bluetoothDevice.connectGatt(activity.applicationContext, AUTO_CONNECT, gattCallback)
+            val gattCallback = GattClientCallback(device, viewModel)
+            device.bluetoothDevice.connectGatt(
+                activity.applicationContext,
+                AUTO_CONNECT,
+                gattCallback,
+                BluetoothDevice.TRANSPORT_LE
+            )
         } else {
             viewModel.updateDevice(device, DeviceConnectionState.OFFLINE)
-            device.gatt?.disconnect()
+            val dev = viewModel.getDevice(device.address)
+            dev?.gatt?.disconnect()
         }
     }
 
-    private class GattClientCallback(private val device: DeviceModel) : BluetoothGattCallback() {
+    private class GattClientCallback(private val device: DeviceModel, private val viewModel: MainViewModel) : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
-            val isSuccess = status == BluetoothGatt.GATT_SUCCESS
-            val isConnected = newState == BluetoothProfile.STATE_CONNECTED
-            if (isSuccess && isConnected) {
-                gatt?.discoverServices()
-                device.gatt = gatt
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    viewModel.updateDevice(device, DeviceConnectionState.CONNECTED)
+                    gatt?.discoverServices()
+                    val dev = viewModel.getDevice(device.address)
+                    dev?.gatt = gatt
+                }
+                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+
+                }
             }
         }
 
+        @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 gatt?.services?.forEach {
                     Log.i(TAG, "found service: " + it.uuid)
                 }
-//                val service = gatt?.getService(SERVICE_UUID)
-//                messageCharacteristic = service.getCharacteristic(MESSAGE_UUID)
+                val service = gatt?.getService(SERVICE_UUID)
+                val characteristic = service?.getCharacteristic(TEMPERATURE_MESSAGE_UUID)
+                characteristic?.let {
+                    val success = gatt.readCharacteristic(it)
+                    if (success) {
+                        Log.i(TAG, "read value: ")
+                    }
+                }
             }
 
+        }
+
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicRead(gatt, characteristic, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                characteristic?.let {
+                    val s = String(it.value)
+                    val output = SensorOutput(temperature = s, humidity = "0")
+                    viewModel.updateDevice(device, output)
+                    Log.i(TAG, "read value: $s")
+                }
+            }
         }
     }
 }

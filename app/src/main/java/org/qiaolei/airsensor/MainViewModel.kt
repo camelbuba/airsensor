@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
+import org.qiaolei.airsensor.data.SensorOutput
 
 class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
@@ -37,11 +38,19 @@ class MainViewModel : ViewModel() {
     }
 
     fun updateDevice(device: DeviceModel, state: DeviceConnectionState) {
-
         val devices = _uiState.value.devices
         devices.forEachIndexed { index, it ->
             if (it.address == device.address) {
                 devices[index] = device.copy(state = state)
+            }
+        }
+    }
+
+    fun updateDevice(device: DeviceModel, output: SensorOutput) {
+        val devices = _uiState.value.devices
+        devices.forEachIndexed { index, it ->
+            if (it.address == device.address) {
+                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED,output = output)
             }
         }
     }
