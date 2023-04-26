@@ -181,12 +181,13 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                                     Log.e(TAG, "read temperature value error")
                                 }
                             }
+                            delay(1000)
                             humidityChar?.let {
                                 if (!gatt.readCharacteristic(humidityChar)) {
                                     Log.e(TAG, "read humidity value error")
                                 }
                             }
-                            delay(2000)
+                            delay(1000)
                         }
                     }
                 }
@@ -205,13 +206,15 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                 characteristic?.let {
                     if (it.uuid == TEMPERATURE_MESSAGE_UUID) {
                         val temperature = String(it.value)
+                        device.temperature = temperature
                         viewModel.updateDeviceTemperature(device, temperature)
                         Log.i(TAG, "temperature: $temperature")
                     }
                     if (it.uuid == HUMIDITY_MESSAGE_UUID) {
                         val humidity = String(it.value)
-                        viewModel.updateDeviceTemperature(device, humidity)
-                        Log.i(TAG, "temperature: $humidity")
+                        device.humidity = humidity
+                        viewModel.updateDeviceHumidity(device, humidity)
+                        Log.i(TAG, "humidity: $humidity")
                     }
                 }
             }
