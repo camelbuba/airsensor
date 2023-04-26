@@ -58,6 +58,11 @@ fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel:
             title = { Text(if (mainUiState.isScanning) "扫描中(" + devices.size + ")" else "") },
             actions = {
                 IconButton(onClick = {
+
+                }) {
+                    Icon(ImageVector.vectorResource(R.drawable.settings), "设置")
+                }
+                IconButton(onClick = {
                     gattClient.scan()
                 }) {
                     Icon(ImageVector.vectorResource(R.drawable.bluetooth), "扫描")
