@@ -4,11 +4,11 @@
 
 ## 截图
 
-扫描设备
-![扫描截图](./screenshots/screenshot_scan.jpg)
+### 扫描设备
+<img src="./screenshots/screenshot_scan.jpg" width="256px" alt="扫描设备截图">
 
-读取温湿度
-![读取截图](./screenshots/screenshot_read.jpg)
+### 读取温湿度
+<img src="./screenshots/screenshot_read.jpg" width="256px" alt="读取温度截图">
 
-配置扫描过滤选项
-![设置截图](./screenshots/screenshot_setting.jpg)
+### 配置扫描过滤选项
+<img src="./screenshots/screenshot_setting.jpg" width="256px" alt="设置截图">
