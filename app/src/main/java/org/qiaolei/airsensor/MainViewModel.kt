@@ -38,11 +38,8 @@ class MainViewModel : ViewModel() {
 
     fun updateDeviceState(device: DeviceModel, state: DeviceConnectionState) {
         val devices = _uiState.value.devices
-        devices.forEachIndexed { index, it ->
-            if (it.address == device.address) {
-                devices[index] = device.copy(state = state)
-            }
-        }
+        val index = devices.indexOfFirst { it.address == device.address }
+        devices[index] = device.copy(state = state)
     }
 
     fun updateDeviceTemperature(device: DeviceModel, temperature: String) {

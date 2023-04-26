@@ -98,7 +98,8 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
 
         if (!viewModel.uiState.value.isScanning) {
             viewModel.startScan()
-            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
+//            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
+            leScanner.startScan(scanCallback)
             Log.i(TAG, "start scan")
         } else {
             Log.i(TAG, "stop scan")
