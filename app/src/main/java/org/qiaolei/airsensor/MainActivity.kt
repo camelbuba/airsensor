@@ -167,6 +167,14 @@ fun DeviceStateLine(device: DeviceModel, gattClient: GattClient, modifier: Modif
                         tint = Color(0xFFD1D1D1)
                     )
                 }
+
+                DeviceConnectionState.FAILURE -> {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.state_connected_inner),
+                        "",
+                        tint = Color(0xFFDC1A1A)
+                    )
+                }
             }
         }
 
@@ -239,6 +247,10 @@ fun DeviceCard(device: DeviceModel, gattClient: GattClient) {
 
                 DeviceConnectionState.OFFLINE -> {
                     DeviceStateText("设备已离线")
+                }
+
+                DeviceConnectionState.FAILURE -> {
+                    DeviceStateText("连接失败")
                 }
             }
         }

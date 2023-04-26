@@ -25,7 +25,7 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
 
     companion object {
         const val DEVICE_NAME = "air sensor"
-        const val AUTO_CONNECT = true
+        const val AUTO_CONNECT = false
         val SERVICE_UUID: UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b")
         val TEMPERATURE_MESSAGE_UUID: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8")
         val HUMIDITY_MESSAGE_UUID: UUID = UUID.fromString("32db52a6-5c87-407b-8bc0-c4170df277cd")
@@ -126,6 +126,10 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
             DeviceConnectionState.OFFLINE -> {
                 true
             }
+
+            DeviceConnectionState.FAILURE -> {
+                true
+            }
         }
         if (waitConnect) {
             viewModel.updateDeviceState(device, DeviceConnectionState.CONNECTING)
@@ -157,8 +161,10 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
                     dev?.gatt = gatt
                 }
                 if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-
+                    Log.i(TAG, "disconnected")
                 }
+            } else {
+                viewModel.updateDeviceState(device, DeviceConnectionState.FAILURE)
             }
         }
 

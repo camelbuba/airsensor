@@ -4,5 +4,6 @@ enum class DeviceConnectionState {
     CONNECTING,
     CONNECTED,
     FOUND,
-    OFFLINE
+    OFFLINE,
+    FAILURE
 }
