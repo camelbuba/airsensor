@@ -62,6 +62,14 @@ class MainViewModel : ViewModel() {
     }
 
     fun getSettings(): Settings {
-        return Settings(scanFilterBluetoothAddress = "", scanFilterBluetoothName = "")
+        return _uiState.value.settings.value
+    }
+
+    fun updateSettingsFilterAddress(address: String) {
+        _uiState.value.settings.value = _uiState.value.settings.value.copy(scanFilterBluetoothAddress = address)
+    }
+
+    fun updateSettingsFilterName(name: String) {
+        _uiState.value.settings.value = _uiState.value.settings.value.copy(scanFilterBluetoothName = name)
     }
 }

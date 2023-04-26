@@ -69,6 +69,8 @@ fun CoordinatorScreen(gattClient: GattClient, viewModel: MainViewModel) {
 
 @Composable
 fun SettingsScreen(viewModel: MainViewModel, navController: NavHostController) {
+    val settings = viewModel.getSettings()
+
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             navigationIcon = {
@@ -87,7 +89,36 @@ fun SettingsScreen(viewModel: MainViewModel, navController: NavHostController) {
                 }
             }
         )
-        Text("settings")
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Column {
+                Text(text = "扫描过滤", style = MaterialTheme.typography.h3)
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth().offset(x = 20.dp, y = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = settings.scanFilterBluetoothAddress,
+                    onValueChange = {
+                        viewModel.updateSettingsFilterAddress(it)
+                    },
+                    label = {
+                        Text("蓝牙地址")
+                    },
+                    maxLines = 1
+                )
+                OutlinedTextField(
+                    value = settings.scanFilterBluetoothName,
+                    onValueChange = {
+                        viewModel.updateSettingsFilterName(it)
+                    },
+                    label = {
+                        Text("蓝牙名字")
+                    },
+                    maxLines = 1
+                )
+            }
+        }
     }
 }
 
