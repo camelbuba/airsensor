@@ -24,6 +24,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import org.qiaolei.airsensor.data.DeviceConnectionState
 import org.qiaolei.airsensor.data.DeviceModel
 import org.qiaolei.airsensor.ui.theme.AirsensorTheme
@@ -41,7 +46,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AirsensorTheme {
                 Surface(color = MaterialTheme.colors.background) {
-                    MainScreen(gattClient, viewModel = viewModel)
+                    CoordinatorScreen(gattClient = gattClient, viewModel = viewModel)
                 }
             }
         }
@@ -50,7 +55,50 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel: MainViewModel) {
+fun CoordinatorScreen(gattClient: GattClient, viewModel: MainViewModel) {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "main_screen") {
+        composable("main_screen") {
+            MainScreen(gattClient = gattClient, viewModel = viewModel, navController = navController)
+        }
+        composable("settings_screen") {
+            SettingsScreen(viewModel, navController)
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(viewModel: MainViewModel, navController: NavHostController) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            navigationIcon = {
+                IconButton(onClick = {
+                    navController.navigate("main_screen")
+                }) {
+                    Icon(ImageVector.vectorResource(R.drawable.arrow_back), "返回")
+                }
+            },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().offset(x = (-24).dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "设置")
+                }
+            }
+        )
+        Text("settings")
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+fun MainScreen(
+    gattClient: GattClient,
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel,
+    navController: NavController
+) {
     val mainUiState by viewModel.uiState.collectAsState()
     val devices = mainUiState.devices
     Column(modifier = Modifier.fillMaxSize()) {
@@ -58,7 +106,7 @@ fun MainScreen(gattClient: GattClient, modifier: Modifier = Modifier, viewModel:
             title = { Text(if (mainUiState.isScanning) "扫描中(" + devices.size + ")" else "") },
             actions = {
                 IconButton(onClick = {
-
+                    navController.navigate("settings_screen")
                 }) {
                     Icon(ImageVector.vectorResource(R.drawable.settings), "设置")
                 }
