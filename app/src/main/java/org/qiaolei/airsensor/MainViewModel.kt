@@ -44,20 +44,14 @@ class MainViewModel : ViewModel() {
 
     fun updateDeviceTemperature(device: DeviceModel, temperature: String) {
         val devices = _uiState.value.devices
-        devices.forEachIndexed { index, it ->
-            if (it.address == device.address) {
-                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, temperature = temperature)
-            }
-        }
+        val index = devices.indexOfFirst { it.address == device.address }
+        devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, temperature = temperature)
     }
 
     fun updateDeviceHumidity(device: DeviceModel, humidity: String) {
         val devices = _uiState.value.devices
-        devices.forEachIndexed { index, it ->
-            if (it.address == device.address) {
-                devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, humidity = humidity)
-            }
-        }
+        val index = devices.indexOfFirst { it.address == device.address }
+        devices[index] = device.copy(state = DeviceConnectionState.CONNECTED, humidity = humidity)
     }
 
     fun startScan() {
