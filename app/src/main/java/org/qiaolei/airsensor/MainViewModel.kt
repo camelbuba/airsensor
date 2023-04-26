@@ -1,6 +1,5 @@
 package org.qiaolei.airsensor
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,17 +14,13 @@ class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    fun addDevice(deviceModel: DeviceModel) {
+    fun addDevice(device: DeviceModel) {
         viewModelScope.launch {
             val devices = _uiState.value.devices
-            devices.all { it.address != deviceModel.address }.let {
-                if (it) {
-                    Log.i("xxx", "addDevice")
-                    devices.add(deviceModel)
+            devices.any { it.address == device.address }.let { exists ->
+                if (!exists) {
+                    devices.add(device)
                     _uiState.emit(_uiState.value)
-//                    _uiState.update { currentState ->
-//                        currentState.copy(devices = devices)
-//                    }
                 }
             }
         }
