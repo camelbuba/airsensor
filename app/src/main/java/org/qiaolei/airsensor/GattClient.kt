@@ -93,13 +93,19 @@ class GattClient(private val activity: MainActivity, private val viewModel: Main
         val leScanner = bluetoothManager.adapter.bluetoothLeScanner
         val scanSettings: ScanSettings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES).build()
-        val filter = ScanFilter.Builder().setDeviceName(DEVICE_NAME)
-            .build()
+        val settings = viewModel.getSettings()
+        val filterBuilder = ScanFilter.Builder()
+        if (settings.scanFilterBluetoothAddress.isNotEmpty()) {
+            filterBuilder.setDeviceAddress(settings.scanFilterBluetoothAddress)
+        }
+        if (settings.scanFilterBluetoothName.isNotEmpty()) {
+            filterBuilder.setDeviceName(settings.scanFilterBluetoothName)
+        }
+        val filter = filterBuilder.build()
 
         if (!viewModel.uiState.value.isScanning) {
             viewModel.startScan()
-//            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
-            leScanner.startScan(scanCallback)
+            leScanner.startScan(listOf(filter), scanSettings, scanCallback)
             Log.i(TAG, "start scan")
         } else {
             Log.i(TAG, "stop scan")

@@ -60,4 +60,8 @@ class MainViewModel : ViewModel() {
             it.copy(isScanning = false)
         }
     }
+
+    fun getSettings(): Settings {
+        return Settings(scanFilterBluetoothAddress = "", scanFilterBluetoothName = "")
+    }
 }
